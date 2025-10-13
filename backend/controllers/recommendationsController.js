@@ -8,7 +8,7 @@
  * }
  */
 
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default || require('node-fetch');
 
 exports.getRecommendations = async (req, res) => {
   try {
@@ -16,11 +16,11 @@ exports.getRecommendations = async (req, res) => {
 
     // Use Gemini API (Google Generative Language API)
     const apiKey = 'AIzaSyD4A3BJx_6RNbSBZ3lGufIev23G4mGiqgY';
-    const GOOGLE_API_KEY = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyD4A3BJx_6RNbSBZ3lGufIev23G4mGiqgY'; 
-
+    const GOOGLE_API_KEY = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=AIzaSyD4A3BJx_6RNbSBZ3lGufIev23G4mGiqgY'; 
+ 
     // Compose prompt
     const prompt = `You are an expert academic advisor specializing in recommending courses and programs of study to students.\n\nStudent Description: ${description}\n\nSuggest 3 relevant courses. For each, provide:\n- courseName\n- universityName\n- matchScore (0-100)\n- rationale (1-2 sentences)\nReturn as JSON array.`;
-
+console.log('prompt', prompt);
     const body = {
       contents: [
         {
@@ -30,12 +30,13 @@ exports.getRecommendations = async (req, res) => {
         }
       ]
     };
-
-    const response = await fetch(endpoint, {
+    console.log('body', JSON.stringify(body));
+    const response = await fetch(GOOGLE_API_KEY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+    console.log('response', response);
 
     let rawGemini = '';
     let data = null;
