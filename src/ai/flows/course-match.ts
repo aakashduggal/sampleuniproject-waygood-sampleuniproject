@@ -27,7 +27,33 @@ const CourseMatchOutputSchema = z.object({
 export type CourseMatchOutput = z.infer<typeof CourseMatchOutputSchema>;
 
 export async function courseMatch(input: CourseMatchInput): Promise<CourseMatchOutput> {
-  return courseMatchFlow(input);
+  // Call backend recommendations endpoint which (for this assessment) returns mocked Gemini results.
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:5000';
+  try {
+    const res = await fetch(`${apiBase}/api/recommendations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: input.description })
+    });
+
+    if (!res.ok) {
+      throw new Error('Recommendation API error');
+    }
+
+    const data = await res.json();
+    // Map the backend recommendations into the expected CourseMatchOutput shape
+    const suggestions = (data.recommendations || []).map((r: any) => ({
+      courseName: r.courseName || r.title,
+      universityName: r.universityName || '',
+      matchScore: r.matchScore || r.score || 75,
+      rationale: r.rationale || r.description || ''
+    }));
+
+    return { suggestions };
+  } catch (err) {
+    console.error('courseMatch error', err);
+    throw new Error('Failed to get recommendations from backend. Please try again later.');
+  }
 }
 
 const prompt = ai.definePrompt({

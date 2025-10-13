@@ -19,24 +19,44 @@ export default function AdminLoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      if (email === 'test@email.com' && password === 'Admin@123') {
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to dashboard...',
-        });
-        router.push('/admin/dashboard');
-      } else {
+    // Call backend login endpoint
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    fetch(`${apiBase}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || (data.errors && data.errors[0]?.msg) || 'Login failed');
+        }
+        return data;
+      })
+      .then((data) => {
+        // Expecting { token }
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          toast({
+            title: 'Login Successful',
+            description: 'Redirecting to dashboard...',
+          });
+          router.push('/admin/dashboard');
+        } else {
+          throw new Error('Token missing in response');
+        }
+      })
+      .catch((err: any) => {
+        console.error('Login error', err);
         toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: 'Invalid email or password.',
+          description: err.message || 'Invalid email or password.',
         });
-        setIsLoading(false);
-      }
-    }, 1000);
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
