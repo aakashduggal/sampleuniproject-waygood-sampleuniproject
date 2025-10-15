@@ -37,7 +37,9 @@ export async function courseMatch(input: CourseMatchInput): Promise<CourseMatchO
     });
 
     if (!res.ok) {
-      throw new Error('Recommendation API error');
+      const errorText = await res.text();
+      console.error('Backend Error:', res.status, errorText);
+      throw new Error(`Recommendation API error: ${res.status} - ${errorText}`);
     }
 
     const data = await res.json();
